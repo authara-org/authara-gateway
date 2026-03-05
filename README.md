@@ -145,7 +145,6 @@ The gateway uses Caddy's built-in compression support with:
 
 - **Zstandard**
 - **Gzip**
-- **Brotli**
 
 Compression is automatically disabled for:
 

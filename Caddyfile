@@ -10,23 +10,21 @@
 	@eventStream header Accept *text/event-stream*
 	@ws header Upgrade websocket
 
-	encode zstd gzip br {
-		not @authStatic
-		not @eventStream
-		not @ws
-	}
+	# Only compress when NOT static auth assets, NOT SSE, NOT websockets
+	@compressible not path /auth/static/* not header Accept *text/event-stream* not header Upgrade websocket
+
+	encode @compressible zstd gzip
 }
 
-(compression_on) {
+(compression_true) {
 	import compression
 }
-(compression_off) {
+(compression_false) {
 	# no compression
 }
 
 # Bind address/port (default :80)
 {$GATEWAY_BIND::80} {
-
 	# Compression toggle (default true)
 	# ENABLE_COMPRESSION=true|false
 	import compression_{$ENABLE_COMPRESSION:true}
