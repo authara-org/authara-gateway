@@ -1,21 +1,43 @@
 {
-	# We terminate TLS outside or via another proxy
-	auto_https off
+	# Control automatic HTTPS
+	# off (default) – TLS handled by external proxy
+	# on – Caddy manages certificates
+	auto_https {$AUTO_HTTPS:off}
 }
 
-:{$GATEWAY_PORT:80} {
+(compression) {
+	@authStatic path /auth/static/*
+	@eventStream header Accept *text/event-stream*
+	@ws header Upgrade websocket
 
-	# ----------------------------
+	encode zstd gzip br {
+		not @authStatic
+		not @eventStream
+		not @ws
+	}
+}
+
+(compression_on) {
+	import compression
+}
+(compression_off) {
+	# no compression
+}
+
+# Bind address/port (default :80)
+{$GATEWAY_BIND::80} {
+
+	# Compression toggle (default true)
+	# ENABLE_COMPRESSION=true|false
+	import compression_{$ENABLE_COMPRESSION:true}
+
 	# AuthGate
-	# ----------------------------
-	route /auth/* {
+	handle /auth/* {
 		reverse_proxy {$AUTHGATE_UPSTREAM}
 	}
 
-	# ----------------------------
-	# Application
-	# ----------------------------
-	route /* {
+	# Application (everything else)
+	handle {
 		reverse_proxy {$APP_UPSTREAM}
 	}
 }

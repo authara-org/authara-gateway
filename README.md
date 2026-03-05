@@ -27,36 +27,25 @@ AuthGate Gateway
 ```bash
 docker run \
   -p 3000:3000 \
-  -e GATEWAY_PORT=3000 \
+  -e GATEWAY_BIND=:3000 \
   -e AUTHGATE_UPSTREAM=authgate:8080 \
-  -e APP_UPSTREAM=app:3000 \
-  ghcr.io/authgate/authgate-gateway:1.0.0
+  -e APP_UPSTREAM=app:8080 \
+  ghcr.io/authgate/authgate-gateway:1.1.0
 ```
 
 ---
 
 ## Table of Contents
 
-- Purpose
 - Routing Model
 - Environment Variables
 - Example (Docker Compose)
 - HTTPS / TLS
-- Design Principles
+- Compression
 - License
 
 ---
 
-## Purpose
-
-The gateway ensures that:
-
-- applications never know where AuthGate lives
-- authentication routes are fully centralized
-- cookies and redirects stay on a single origin
-- AuthGate remains **infrastructure**, not application logic
-
----
 
 ## Routing Model
 
@@ -67,23 +56,29 @@ All requests enter through the gateway:
 /*        → Application
 ```
 
-Applications must redirect unauthenticated users to:
-
-```
-/auth/login
-```
-
 ---
 
 ## Environment Variables
 
 The gateway is **fully configured via environment variables**.
 
-| Variable              | Required | Description                                  |
-|-----------------------|----------|----------------------------------------------|
-| `GATEWAY_PORT`        | No       | Port to listen on (default: `80`)             |
-| `AUTHGATE_UPSTREAM`   | Yes      | AuthGate upstream (e.g. `authgate:8080`)      |
-| `APP_UPSTREAM`        | Yes      | Application upstream (e.g. `app:3000`)        |
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `AUTHGATE_UPSTREAM` | Yes | AuthGate upstream (e.g. `authgate:8080`) |
+| `APP_UPSTREAM` | Yes | Application upstream (e.g. `app:8080`) |
+| `GATEWAY_BIND` | No | Address and port the gateway listens on (default: `:80`) |
+| `AUTO_HTTPS` | No | Controls Caddy automatic HTTPS (`off` by default) |
+| `ENABLE_COMPRESSION` | No | Enables response compression (`true` by default) |
+
+### Example values
+
+```bash
+AUTHGATE_UPSTREAM=authgate:8080
+APP_UPSTREAM=app:8080
+GATEWAY_BIND=:3000
+AUTO_HTTPS=off
+ENABLE_COMPRESSION=true
+```
 
 ---
 
@@ -96,22 +91,23 @@ services:
     ports:
       - "3000:3000"
     environment:
-      GATEWAY_PORT: 3000
+      GATEWAY_BIND: :3000
       AUTHGATE_UPSTREAM: authgate:8080
-      APP_UPSTREAM: app:3000
+      APP_UPSTREAM: app:8080
+      AUTO_HTTPS: off
+      ENABLE_COMPRESSION: true
     depends_on:
       - authgate
       - app
 
   authgate:
     image: ghcr.io/authgate/authgate-core:1.0.0
-    ports:
       - "8080"
 
   app:
     image: example/app:latest
     ports:
-      - "3000"
+      - "8080"
 ```
 
 > This example shows **network wiring only**.  
@@ -121,19 +117,48 @@ services:
 
 ## HTTPS / TLS
 
-AuthGate Gateway does **not** terminate TLS by default.
+AuthGate Gateway **does not enable automatic HTTPS by default**.
 
-HTTPS is expected to be handled by upstream infrastructure such as:
+TLS is typically terminated by upstream infrastructure such as:
 
 - Kubernetes Ingress
 - Cloud load balancers
-- Reverse proxies (NGINX, Traefik, Envoy)
+- Reverse proxies (NGINX, Caddy, Traefik, Envoy)
 - Corporate TLS gateways
 
-This design keeps the gateway **portable and environment-agnostic**.
+This keeps the gateway **portable and environment-agnostic**.
 
-If TLS termination is required at the gateway, operators may provide a custom
-Caddy configuration. TLS is intentionally disabled by default.
+If TLS termination should happen inside the gateway, operators may enable
+Caddy's automatic HTTPS:
+
+```bash
+AUTO_HTTPS=on
+```
+
+---
+
+## Compression
+
+Response compression is **enabled by default**.
+
+The gateway uses Caddy's built-in compression support with:
+
+- **Zstandard**
+- **Gzip**
+- **Brotli**
+
+Compression is automatically disabled for:
+
+- Server-Sent Events (`text/event-stream`)
+- WebSocket connections
+- AuthGate static assets (already compressed)
+
+Operators may disable compression if another layer (CDN, load balancer, or
+application server) already handles it:
+
+```bash
+ENABLE_COMPRESSION=false
+```
 
 ---
 
