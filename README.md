@@ -1,7 +1,7 @@
-# AuthGate Gateway
+# Authara Gateway
 
-**AuthGate Gateway** is a lightweight, configuration-driven reverse proxy that
-routes traffic between your application and **AuthGate**.
+**Authara Gateway** is a lightweight, configuration-driven reverse proxy that
+routes traffic between your application and **Authara**.
 
 Built on **Caddy**, it is fully environment-agnostic and behaves identically
 across all deployments.
@@ -15,8 +15,8 @@ All HTTP traffic flows through the gateway:
 ```
 Client
   ↓
-AuthGate Gateway
-  ├── /auth/*  → AuthGate
+Authara Gateway
+  ├── /auth/*  → Authara
   └── /*       → Application
 ```
 
@@ -28,9 +28,9 @@ AuthGate Gateway
 docker run \
   -p 3000:3000 \
   -e GATEWAY_BIND=:3000 \
-  -e AUTHGATE_UPSTREAM=authgate:8080 \
+  -e AUTHARA_UPSTREAM=authara:8080 \
   -e APP_UPSTREAM=app:8080 \
-  ghcr.io/authgate/authgate-gateway:1.1.0
+  ghcr.io/authara/authara-gateway:1.1.0
 ```
 
 ---
@@ -52,7 +52,7 @@ docker run \
 All requests enter through the gateway:
 
 ```
-/auth/*   → AuthGate
+/auth/*   → Authara
 /*        → Application
 ```
 
@@ -64,7 +64,7 @@ The gateway is **fully configured via environment variables**.
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `AUTHGATE_UPSTREAM` | Yes | AuthGate upstream (e.g. `authgate:8080`) |
+| `AUTHARA_UPSTREAM` | Yes | Authara upstream (e.g. `authara:8080`) |
 | `APP_UPSTREAM` | Yes | Application upstream (e.g. `app:8080`) |
 | `GATEWAY_BIND` | No | Address and port the gateway listens on (default: `:80`) |
 | `AUTO_HTTPS` | No | Controls Caddy automatic HTTPS (`off` by default) |
@@ -73,7 +73,7 @@ The gateway is **fully configured via environment variables**.
 ### Example values
 
 ```bash
-AUTHGATE_UPSTREAM=authgate:8080
+AUTHARA_UPSTREAM=authara:8080
 APP_UPSTREAM=app:8080
 GATEWAY_BIND=:3000
 AUTO_HTTPS=off
@@ -87,21 +87,21 @@ ENABLE_COMPRESSION=true
 ```yaml
 services:
   gateway:
-    image: ghcr.io/authgate/authgate-gateway:1.0.0
+    image: ghcr.io/authara/authara-gateway:1.0.0
     ports:
       - "3000:3000"
     environment:
       GATEWAY_BIND: :3000
-      AUTHGATE_UPSTREAM: authgate:8080
+      AUTHARA_UPSTREAM: authara:8080
       APP_UPSTREAM: app:8080
       AUTO_HTTPS: off
       ENABLE_COMPRESSION: true
     depends_on:
-      - authgate
+      - authara
       - app
 
-  authgate:
-    image: ghcr.io/authgate/authgate-core:1.0.0
+  authara:
+    image: ghcr.io/authara/authara-core:1.0.0
       - "8080"
 
   app:
@@ -111,13 +111,13 @@ services:
 ```
 
 > This example shows **network wiring only**.  
-> Application and AuthGate configuration are intentionally omitted.
+> Application and Authara configuration are intentionally omitted.
 
 ---
 
 ## HTTPS / TLS
 
-AuthGate Gateway **does not enable automatic HTTPS by default**.
+Authara Gateway **does not enable automatic HTTPS by default**.
 
 TLS is typically terminated by upstream infrastructure such as:
 
@@ -150,7 +150,7 @@ Compression is automatically disabled for:
 
 - Server-Sent Events (`text/event-stream`)
 - WebSocket connections
-- AuthGate static assets (already compressed)
+- Authara static assets (already compressed)
 
 Operators may disable compression if another layer (CDN, load balancer, or
 application server) already handles it:

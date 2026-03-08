@@ -29,9 +29,9 @@
 	# ENABLE_COMPRESSION=true|false
 	import compression_{$ENABLE_COMPRESSION:true}
 
-	# AuthGate
+	# Authara
 	handle /auth/* {
-		reverse_proxy {$AUTHGATE_UPSTREAM}
+		reverse_proxy {$AUTHARA_UPSTREAM}
 	}
 
 	# Application (everything else)

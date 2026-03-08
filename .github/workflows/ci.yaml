@@ -21,8 +21,8 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t authgate-gateway:ci .
+          docker build -t authara-gateway:ci .
 
       - name: Validate Caddyfile
         run: |
-          docker run --rm authgate-gateway:ci caddy validate --config /etc/caddy/Caddyfile
+          docker run --rm authara-gateway:ci caddy validate --config /etc/caddy/Caddyfile

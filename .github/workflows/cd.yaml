@@ -31,9 +31,9 @@ jobs:
       - name: Build image
         run: |
           docker build \
-            -t ghcr.io/alexlup06-authgate/authgate-gateway:${VERSION} \
+            -t ghcr.io/authara-org/authara-gateway:${VERSION} \
             .
 
       - name: Push image
         run: |
-          docker push ghcr.io/alexlup06-authgate/authgate-gateway:${VERSION}
+          docker push ghcr.io/authara-org/authara-gateway:${VERSION}
